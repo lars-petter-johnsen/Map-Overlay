@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="map-routes-demo" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Oslo Fjord Loop</name>
+    <trkseg>
+      <trkpt lat="59.9075" lon="10.7530"><ele>10</ele></trkpt>
+      <trkpt lat="59.9068" lon="10.7395"><ele>8</ele></trkpt>
+      <trkpt lat="59.9042" lon="10.7280"><ele>6</ele></trkpt>
+      <trkpt lat="59.9000" lon="10.7255"><ele>12</ele></trkpt>
+      <trkpt lat="59.8965" lon="10.7360"><ele>18</ele></trkpt>
+      <trkpt lat="59.8978" lon="10.7510"><ele>22</ele></trkpt>
+      <trkpt lat="59.9010" lon="10.7605"><ele>15</ele></trkpt>
+      <trkpt lat="59.9060" lon="10.7600"><ele>11</ele></trkpt>
+      <trkpt lat="59.9075" lon="10.7530"><ele>10</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
