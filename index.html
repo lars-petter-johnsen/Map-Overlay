@@ -12,14 +12,11 @@
 
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">
-      <p class="eyebrow">Track log 001</p>
-      <h1>Waypoint</h1>
-      <p>Overlay GPX and GeoJSON routes on the map. Routes are loaded from the routes/ folder.</p>
-    </div>
-
     <div class="section">
-      <h2>Saved routes</h2>
+      <div class="section-header">
+        <h2>Saved routes</h2>
+        <button id="deselect-all-btn" class="text-btn">Deselect all</button>
+      </div>
       <ul class="route-list" id="route-list">
         <li class="empty-note">Loading routes…</li>
       </ul>
@@ -32,6 +29,7 @@
   </aside>
 
   <div class="map-wrap">
+    <button id="locate-btn" class="map-fab" title="Find my location" aria-label="Find my location">⌖</button>
     <div id="map"></div>
   </div>
 </div>

@@ -245,3 +245,63 @@ async function loadManifest() {
 }
 
 loadManifest();
+
+// ---------- Deselect all routes ----------
+
+document.getElementById('deselect-all-btn').addEventListener('click', () => {
+  document.querySelectorAll('#route-list input[type="checkbox"]').forEach((checkbox) => {
+    if (checkbox.checked) {
+      checkbox.checked = false;
+      checkbox.dispatchEvent(new Event('change'));
+    }
+  });
+});
+
+// ---------- Find my location ----------
+
+let userLocationMarker = null;
+let userAccuracyCircle = null;
+
+const locateBtn = document.getElementById('locate-btn');
+
+locateBtn.addEventListener('click', () => {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by this browser.');
+    return;
+  }
+
+  locateBtn.classList.add('locating');
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      locateBtn.classList.remove('locating');
+      const { latitude, longitude, accuracy } = pos.coords;
+
+      if (userLocationMarker) map.removeLayer(userLocationMarker);
+      if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
+
+      userAccuracyCircle = L.circle([latitude, longitude], {
+        radius: accuracy,
+        color: '#c8843c',
+        weight: 1,
+        fillColor: '#c8843c',
+        fillOpacity: 0.08
+      }).addTo(map);
+
+      userLocationMarker = L.circleMarker([latitude, longitude], {
+        radius: 7,
+        color: '#f6f3ea',
+        weight: 2,
+        fillColor: '#c8843c',
+        fillOpacity: 1
+      }).addTo(map);
+
+      map.flyTo([latitude, longitude], 15);
+    },
+    (err) => {
+      locateBtn.classList.remove('locating');
+      alert('Could not get your location: ' + err.message);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+});
