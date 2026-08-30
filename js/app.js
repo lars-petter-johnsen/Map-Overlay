@@ -20,7 +20,7 @@ function nextColor() {
   return c;
 }
 
-// track { id, name, color, layer, checkboxEl, listEl }
+// track { id, name, color, layer, listEl }
 const tracks = new Map();
 let allBounds = null;
 
@@ -66,7 +66,9 @@ function renderEmptyStateIfNeeded() {
   }
 }
 
-function addTrackFromSource(source, name, color, removable) {
+// Creates the sidebar row + checkbox/remove wiring for any track.
+// Returns the created id and <li> element; caller fills in stats later.
+function createListItem(name, color, removable) {
   const id = 'trk_' + Math.random().toString(36).slice(2, 9);
   const list = document.getElementById('route-list');
   const emptyNote = list.querySelector('.empty-note');
@@ -100,12 +102,18 @@ function addTrackFromSource(source, name, color, removable) {
     li.querySelector('button').addEventListener('click', () => removeTrack(id));
   }
 
+  return { id, li };
+}
+
+// ---------- GPX tracks ----------
+
+function addGpxTrack(source, name, color, removable) {
+  const { id, li } = createListItem(name, color, removable);
+
   const layer = new L.GPX(source, {
     async: true,
     polyline_options: { color, weight: 4, opacity: 0.85 },
-    marker_options: {
-      startIconUrl: null, endIconUrl: null, shadowUrl: null
-    }
+    markers: { startIcon: null, endIcon: null }
   });
 
   layer.on('loaded', (e) => {
@@ -132,6 +140,85 @@ function addTrackFromSource(source, name, color, removable) {
   tracks.set(id, { id, name, color, layer, listEl: li });
 }
 
+// ---------- GeoJSON tracks (e.g. Overpass/OSM exports) ----------
+
+function haversineMeters(coords) {
+  // coords: array of [lon, lat, ele?]
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  let total = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const [lon1, lat1] = coords[i - 1];
+    const [lon2, lat2] = coords[i];
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    total += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  return total;
+}
+
+function geometryLengthMeters(geometry) {
+  if (!geometry) return 0;
+  if (geometry.type === 'LineString') return haversineMeters(geometry.coordinates);
+  if (geometry.type === 'MultiLineString') {
+    return geometry.coordinates.reduce((sum, line) => sum + haversineMeters(line), 0);
+  }
+  return 0;
+}
+
+// Adds ONE feature (one trail) as its own toggleable sidebar entry + layer.
+function addGeoJsonFeatureTrack(feature, fallbackName, color, removable) {
+  const name =
+    (feature.properties && (feature.properties.name || feature.properties.ref)) || fallbackName;
+  const { id, li } = createListItem(name, color, removable);
+
+  const layer = L.geoJSON(feature, {
+    style: { color, weight: 4, opacity: 0.85 }
+  });
+
+  layer.addTo(map);
+  const b = layer.getBounds();
+  if (b.isValid()) {
+    extendBounds(b);
+    fitToAll();
+  }
+
+  const meters = geometryLengthMeters(feature.geometry);
+  const statsEl = document.getElementById(`stats-${id}`);
+  if (statsEl) statsEl.textContent = formatDistance(meters);
+
+  tracks.set(id, { id, name, color, layer, listEl: li });
+}
+
+// Loads a GeoJSON FeatureCollection and adds each line feature as its own
+// route — this is what an Overpass Turbo / OSM export typically contains
+// (many named trail relations in a single file).
+async function loadGeoJsonCollection(source, removable, baseName) {
+  let data;
+  if (typeof source === 'string' && (source.startsWith('http') || source.startsWith('routes/') || source.startsWith('blob:'))) {
+    const res = await fetch(source);
+    if (!res.ok) throw new Error('could not fetch ' + source);
+    data = await res.json();
+  } else {
+    data = source; // already-parsed object
+  }
+
+  const features = data.type === 'FeatureCollection' ? data.features : [data];
+  let count = 0;
+  features.forEach((feature) => {
+    if (!feature.geometry) return;
+    if (feature.geometry.type !== 'LineString' && feature.geometry.type !== 'MultiLineString') return;
+    count++;
+    addGeoJsonFeatureTrack(feature, `${baseName} ${count}`, nextColor(), removable);
+  });
+  if (count === 0) {
+    console.warn('No LineString/MultiLineString features found in', baseName);
+  }
+}
+
 // ---------- Load saved routes from manifest ----------
 
 async function loadManifest() {
@@ -144,7 +231,12 @@ async function loadManifest() {
       return;
     }
     routes.forEach((r) => {
-      addTrackFromSource(`routes/${r.file}`, r.name, r.color || nextColor(), false);
+      const path = `routes/${r.file}`;
+      if (r.type === 'geojson' || r.file.toLowerCase().endsWith('.geojson') || r.file.toLowerCase().endsWith('.json')) {
+        loadGeoJsonCollection(path, false, r.name).catch((err) => console.warn(err));
+      } else {
+        addGpxTrack(path, r.name, r.color || nextColor(), false);
+      }
     });
   } catch (err) {
     renderEmptyStateIfNeeded();
@@ -153,34 +245,3 @@ async function loadManifest() {
 }
 
 loadManifest();
-
-// ---------- File upload / drag-and-drop ----------
-
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('file-input');
-
-function handleFiles(fileList) {
-  Array.from(fileList).forEach((file) => {
-    if (!file.name.toLowerCase().endsWith('.gpx')) return;
-    const url = URL.createObjectURL(file);
-    addTrackFromSource(url, file.name.replace(/\.gpx$/i, ''), nextColor(), true);
-  });
-}
-
-fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-['dragenter', 'dragover'].forEach((evt) => {
-  dropzone.addEventListener(evt, (e) => {
-    e.preventDefault();
-    dropzone.classList.add('dragover');
-  });
-});
-['dragleave', 'drop'].forEach((evt) => {
-  dropzone.addEventListener(evt, (e) => {
-    e.preventDefault();
-    dropzone.classList.remove('dragover');
-  });
-});
-dropzone.addEventListener('drop', (e) => {
-  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
-});
