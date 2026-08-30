@@ -92,6 +92,32 @@ html, body {
 }
 .section-header h2 { margin: 0; }
 
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.collapse-toggle .chevron {
+  display: inline-block;
+  color: var(--muted);
+  font-size: 11px;
+  transition: transform 0.15s ease;
+}
+
+.collapse-toggle[aria-expanded="false"] .chevron {
+  transform: rotate(-90deg);
+}
+
+.route-list.is-collapsed {
+  display: none;
+}
+
 .text-btn {
   background: none;
   border: none;

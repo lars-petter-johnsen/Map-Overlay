@@ -248,6 +248,23 @@ async function loadManifest() {
 
 loadManifest();
 
+// ---------- Collapsible route list (collapsed by default on mobile) ----------
+
+const routesToggle = document.getElementById('routes-toggle');
+const routeListEl = document.getElementById('route-list');
+
+function setRoutesCollapsed(collapsed) {
+  routeListEl.classList.toggle('is-collapsed', collapsed);
+  routesToggle.setAttribute('aria-expanded', String(!collapsed));
+}
+
+setRoutesCollapsed(window.matchMedia('(max-width: 720px)').matches);
+
+routesToggle.addEventListener('click', () => {
+  const isCollapsed = routeListEl.classList.contains('is-collapsed');
+  setRoutesCollapsed(!isCollapsed);
+});
+
 // ---------- Select all / deselect all toggle ----------
 
 const toggleAllBtn = document.getElementById('deselect-all-btn');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Turveier i Oslo</title>
+<title>Waypoint — Route Viewer</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <link rel="stylesheet" href="css/style.css" />
@@ -12,9 +12,18 @@
 
 <div class="app">
   <aside class="sidebar">
+    <div class="brand">
+      <p class="eyebrow">Track log 001</p>
+      <h1>Waypoint</h1>
+      <p>Overlay GPX and GeoJSON routes on the map. Routes are loaded from the routes/ folder.</p>
+    </div>
+
     <div class="section">
       <div class="section-header">
-        <h2>Saved routes</h2>
+        <button class="collapse-toggle" id="routes-toggle" aria-expanded="true" aria-controls="route-list">
+          <span class="chevron">▾</span>
+          <h2>Saved routes</h2>
+        </button>
         <button id="deselect-all-btn" class="text-btn">Deselect all</button>
       </div>
       <ul class="route-list" id="route-list">
