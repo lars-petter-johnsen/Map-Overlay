@@ -98,9 +98,22 @@ html, body {
   gap: 6px;
   background: none;
   border: none;
+  box-shadow: none;
+  outline: none;
   color: inherit;
+  font: inherit;
+  text-align: left;
   padding: 0;
+  margin: 0;
+  min-width: 0;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+.collapse-toggle:focus-visible {
+  outline: 1px solid var(--amber-soft);
+  outline-offset: 2px;
 }
 
 .collapse-toggle .chevron {
