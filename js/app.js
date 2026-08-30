@@ -247,7 +247,6 @@ async function loadManifest() {
 }
 
 loadManifest();
-updateToggleAllButton();
 
 // ---------- Select all / deselect all toggle ----------
 
@@ -258,6 +257,8 @@ function updateToggleAllButton() {
   const anyChecked = Array.from(checkboxes).some((cb) => cb.checked);
   toggleAllBtn.textContent = anyChecked ? 'Deselect all' : 'Select all';
 }
+
+updateToggleAllButton();
 
 toggleAllBtn.addEventListener('click', () => {
   const checkboxes = document.querySelectorAll('#route-list input[type="checkbox"]');
