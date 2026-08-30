@@ -54,6 +54,7 @@ function removeTrack(id) {
   t.listEl.remove();
   tracks.delete(id);
   renderEmptyStateIfNeeded();
+  updateToggleAllButton();
 }
 
 function renderEmptyStateIfNeeded() {
@@ -96,6 +97,7 @@ function createListItem(name, color, removable) {
     } else {
       map.removeLayer(tracks.get(id).layer);
     }
+    updateToggleAllButton();
   });
 
   if (removable) {
@@ -245,13 +247,25 @@ async function loadManifest() {
 }
 
 loadManifest();
+updateToggleAllButton();
 
-// ---------- Deselect all routes ----------
+// ---------- Select all / deselect all toggle ----------
 
-document.getElementById('deselect-all-btn').addEventListener('click', () => {
-  document.querySelectorAll('#route-list input[type="checkbox"]').forEach((checkbox) => {
-    if (checkbox.checked) {
-      checkbox.checked = false;
+const toggleAllBtn = document.getElementById('deselect-all-btn');
+
+function updateToggleAllButton() {
+  const checkboxes = document.querySelectorAll('#route-list input[type="checkbox"]');
+  const anyChecked = Array.from(checkboxes).some((cb) => cb.checked);
+  toggleAllBtn.textContent = anyChecked ? 'Deselect all' : 'Select all';
+}
+
+toggleAllBtn.addEventListener('click', () => {
+  const checkboxes = document.querySelectorAll('#route-list input[type="checkbox"]');
+  const anyChecked = Array.from(checkboxes).some((cb) => cb.checked);
+  const targetState = !anyChecked; // if any are checked, this click deselects all; otherwise selects all
+  checkboxes.forEach((checkbox) => {
+    if (checkbox.checked !== targetState) {
+      checkbox.checked = targetState;
       checkbox.dispatchEvent(new Event('change'));
     }
   });
